@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+        <Button android:id="@+id/btnScan" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/scan_qr" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:text="@string/or_manual" />
+        <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/server_url">
+            <com.google.android.material.textfield.TextInputEditText android:id="@+id/editUrl" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:inputType="textUri" />
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/pairing_code">
+            <com.google.android.material.textfield.TextInputEditText android:id="@+id/editCode" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:inputType="textCapCharacters|textNoSuggestions" />
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/fingerprint">
+            <com.google.android.material.textfield.TextInputEditText android:id="@+id/editFingerprint" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:inputType="textNoSuggestions" />
+        </com.google.android.material.textfield.TextInputLayout>
+        <Button android:id="@+id/btnPair" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="@string/pair" />
+        <TextView android:id="@+id/txtStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" />
+    </LinearLayout>
+</ScrollView>

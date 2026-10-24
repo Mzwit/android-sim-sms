@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SIM SMS Gateway</string>
+    <string name="pair">Pair with server</string>
+    <string name="pair_again">Pair again</string>
+    <string name="not_paired">Not paired. Open the dashboard → Gateways → Pair a phone, then scan the QR code.</string>
+    <string name="paired_with">Paired as \"%1$s\"\n%2$s</string>
+    <string name="sim_not_selected">No SIM selected for sending</string>
+    <string name="sim_missing">The selected SIM is not present</string>
+    <string name="sim_selected">Sending from SIM %1$d: %2$s (%3$s)</string>
+    <string name="choose_sim">Choose SIM</string>
+    <string name="diagnostics">Diagnostics &amp; test SMS</string>
+    <string name="permissions_ok">All required permissions granted</string>
+    <string name="permissions_missing">Missing permissions: %1$s</string>
+    <string name="grant_permissions">Grant permissions</string>
+    <string name="battery_warning">Battery optimisation is on: Android may stop the gateway. Open Diagnostics to turn it off for this app.</string>
+    <string name="start">Start gateway</string>
+    <string name="pause">Pause</string>
+    <string name="resume">Resume</string>
+    <string name="stop">Stop</string>
+    <string name="emergency">Emergency stop</string>
+    <string name="emergency_title">Emergency stop?</string>
+    <string name="emergency_message">Every message this phone has not started sending is handed back to the server, and the gateway stops. Messages already handed to the radio cannot be recalled.</string>
+    <string name="emergency_confirm">Stop now</string>
+    <string name="service_stopped">Gateway is not running</string>
+    <string name="connected_ago">Connected · last contact %1$s</string>
+    <string name="disconnected">Cannot reach the server – retrying</string>
+    <string name="counts">This session: %1$d sent · %2$d failed\nOn phone: %3$d waiting · %4$d results to upload</string>
+    <string name="interval">One message every %1$.1f s</string>
+    <string name="status_title">Status</string>
+    <string name="setup_title">Setup</string>
+    <string name="honesty_note">\"Sent\" means Android handed the SMS to the network. Delivery is confirmed only when the network returns a delivery report.</string>
+
+    <string name="scan_qr">Scan QR code</string>
+    <string name="scan_prompt">Scan the pairing QR shown on the dashboard</string>
+    <string name="or_manual">…or enter the details manually</string>
+    <string name="server_url">Server URL (https://…)</string>
+    <string name="pairing_code">Pairing code</string>
+    <string name="fingerprint">Certificate fingerprint (self-hosted only)</string>
+    <string name="pairing">Pairing…</string>
+    <string name="qr_invalid">That QR code is not a gateway pairing code.</string>
+    <string name="url_not_allowed">The server must use https:// (plain http is allowed only for 127.0.0.1 over USB).</string>
+    <string name="code_invalid">Enter the pairing code shown on the dashboard.</string>
+    <string name="paired_ok">Paired as \"%1$s\". Choose a SIM, then press Start.</string>
+    <string name="pair_failed">Pairing refused: %1$s</string>
+    <string name="pair_tls_failed">Secure connection failed: %1$s. Check the fingerprint.</string>
+    <string name="pair_unreachable">Cannot reach the server: %1$s</string>
+
+    <string name="sim_choose_info">Choose the SIM that will send the messages. Make sure it has airtime or an SMS bundle.</string>
+    <string name="sim_row">SIM %1$d: %2$s (%3$s)</string>
+    <string name="save">Save</string>
+    <string name="no_sims">No active SIM card found.</string>
+    <string name="no_telephony">This device cannot send SMS.</string>
+    <string name="need_phone_permission">The Phone permission is needed to list SIM cards.</string>
+
+    <string name="refresh">Run checks again</string>
+    <string name="battery_button">Turn off battery optimisation</string>
+    <string name="test_sms_title">Send a test SMS</string>
+    <string name="test_sms_info">Only to authorised test numbers configured on the dashboard (Settings).</string>
+    <string name="send_test">Send test SMS</string>
+    <string name="no_test_numbers">No authorised test numbers</string>
+    <string name="test_sending">Sending test SMS…</string>
+    <string name="test_exception">Test SMS could not be sent: %1$s</string>
+    <string name="recent_errors">Recent problems</string>
+    <string name="no_errors">No problems recorded.</string>
+    <string name="adb_hint">Android limits how many SMS an app may send (often 30 per 30 minutes) and then asks for confirmation on this phone. On your own phone you can raise the limit from a PC with USB debugging:\nadb shell settings put global sms_outgoing_check_max_count 1000\nadb shell settings put global sms_outgoing_check_interval_ms 60000\nSome manufacturers ignore this. Respect your carrier\'s fair-use terms.</string>
+</resources>

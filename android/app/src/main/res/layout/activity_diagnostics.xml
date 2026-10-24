@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+        <com.google.android.material.card.MaterialCardView style="@style/Card">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+                <TextView android:id="@+id/txtChecks" android:layout_width="match_parent" android:layout_height="wrap_content" android:lineSpacingExtra="4dp" />
+                <TextView android:id="@+id/txtServerCheck" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" />
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="8dp">
+                    <Button android:id="@+id/btnRefresh" style="@style/Widget.Material3.Button.OutlinedButton" android:layout_width="0dp" android:layout_weight="1"
+                        android:layout_height="wrap_content" android:layout_marginEnd="6dp" android:text="@string/refresh" />
+                    <Button android:id="@+id/btnBattery" style="@style/Widget.Material3.Button.OutlinedButton" android:layout_width="0dp" android:layout_weight="1"
+                        android:layout_height="wrap_content" android:layout_marginStart="6dp" android:text="@string/battery_button" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+        <com.google.android.material.card.MaterialCardView style="@style/Card">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+                <TextView style="@style/CardTitle" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/test_sms_title" />
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/test_sms_info" />
+                <Spinner android:id="@+id/spinnerTest" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" />
+                <Button android:id="@+id/btnTestSms" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/send_test" />
+                <TextView android:id="@+id/txtTestResult" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+        <com.google.android.material.card.MaterialCardView style="@style/Card">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+                <TextView style="@style/CardTitle" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/recent_errors" />
+                <TextView android:id="@+id/txtErrors" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="12sp" android:textIsSelectable="true" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+        <TextView android:id="@+id/txtAdb" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="12sp"
+            android:textIsSelectable="true" android:textColor="@color/muted" />
+    </LinearLayout>
+</ScrollView>
