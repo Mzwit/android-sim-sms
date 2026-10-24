@@ -11,6 +11,10 @@ export interface Settings {
   max_campaign_recipients: number;
   retention: { messages_days: number; health_days: number; audit_days: number; sessions_days: number };
   test_numbers: string[];
+  opt_out_keywords: string[];
+  gateway_offline_minutes: number;
+  retry_policy: { base_seconds: number; max_seconds: number };
+  sending_confirm_grace_seconds: number;
 }
 
 export type SettingKey = keyof Settings;
@@ -26,6 +30,10 @@ export const SETTING_KEYS: SettingKey[] = [
   'max_campaign_recipients',
   'retention',
   'test_numbers',
+  'opt_out_keywords',
+  'gateway_offline_minutes',
+  'retry_policy',
+  'sending_confirm_grace_seconds',
 ];
 
 export async function getSetting<K extends SettingKey>(q: Queryable, key: K): Promise<Settings[K]> {

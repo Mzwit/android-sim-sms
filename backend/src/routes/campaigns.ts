@@ -10,6 +10,10 @@ import { getSetting } from '../lib/settings.js';
 import { validateTemplate, TEMPLATE_FIELDS } from '../lib/template.js';
 import { can, requirePerm } from '../auth/session.js';
 import { evaluateRecipients, loadCandidates, summarize } from '../services/eligibility.js';
+import * as life from '../services/campaign-lifecycle.js';
+import { campaignProgress, campaignReport } from '../services/reports.js';
+import { CSV_BOM, csvRow } from '../lib/csv.js';
+import { Readable } from 'node:stream';
 import { IdParams, Pagination, Uuid, actor, pageOf } from './common.js';
 
 const TIME = '^([01][0-9]|2[0-3]):[0-5][0-9]$';
@@ -307,6 +311,161 @@ const routes: FastifyPluginAsyncTypebox = async (app) => {
         warnings,
       };
     },
+  );
+
+  const operate = [app.authenticate, requirePerm('campaigns.operate')];
+  const Reason = Type.Object({ reason: Type.String({ minLength: 3, maxLength: 300 }) }, { additionalProperties: false });
+
+  app.post(
+    '/campaigns/:id/test',
+    {
+      preHandler: write,
+      schema: {
+        tags: ['campaigns'],
+        summary: 'Queue the personalised message to one authorised test number (Settings → test_numbers). Sent before any campaign message.',
+        params: IdParams,
+        body: Type.Object({ phone: Type.String({ minLength: 1, maxLength: 40 }) }, { additionalProperties: false }),
+      },
+    },
+    async (req, reply) => {
+      const r = await withTx(db, (tx) => life.sendTestMessage(tx, req.params.id, req.body.phone, actor(req)));
+      reply.code(201);
+      return r;
+    },
+  );
+
+  app.post('/campaigns/:id/submit', { preHandler: write, schema: { tags: ['campaigns'], summary: 'DRAFT → PENDING_APPROVAL (runs all recipient checks)', params: IdParams } }, async (req) => ({
+    summary: await withTx(db, (tx) => life.submitForApproval(tx, req.params.id, actor(req))),
+    campaign: await loadCampaign(db, req.params.id),
+  }));
+
+  app.post(
+    '/campaigns/:id/return-to-draft',
+    { preHandler: [app.authenticate, requirePerm('campaigns.approve')], schema: { tags: ['campaigns'], params: IdParams, body: Type.Object({ note: Type.String({ minLength: 3, maxLength: 500 }) }) } },
+    async (req) => {
+      await withTx(db, (tx) => life.rejectToDraft(tx, req.params.id, req.body.note, actor(req)));
+      return loadCampaign(db, req.params.id);
+    },
+  );
+
+  app.post(
+    '/campaigns/:id/approve',
+    {
+      preHandler: [app.authenticate, requirePerm('campaigns.approve')],
+      schema: {
+        tags: ['campaigns'],
+        summary: 'Approve and queue. Re-runs every check, freezes the recipient list and creates one message per recipient. Requires typing the campaign name.',
+        params: IdParams,
+        body: Type.Object({ confirm_name: Type.String({ minLength: 1, maxLength: 150 }) }, { additionalProperties: false }),
+      },
+    },
+    async (req) => {
+      const r = await withTx(db, (tx) => life.approve(tx, req.params.id, actor(req), { allowSeed: app.deps.config.allowSeedCampaigns, confirmName: req.body.confirm_name }));
+      return { ...r, campaign: await loadCampaign(db, req.params.id) };
+    },
+  );
+
+  app.post('/campaigns/:id/start', { preHandler: operate, schema: { tags: ['campaigns'], summary: 'APPROVED/SCHEDULED → RUNNING now', params: IdParams } }, async (req) => {
+    await withTx(db, (tx) => life.start(tx, req.params.id, actor(req)));
+    return loadCampaign(db, req.params.id);
+  });
+  app.post('/campaigns/:id/pause', { preHandler: operate, schema: { tags: ['campaigns'], params: IdParams, body: Reason } }, async (req) => {
+    await withTx(db, (tx) => life.pause(tx, req.params.id, req.body.reason, actor(req)));
+    return loadCampaign(db, req.params.id);
+  });
+  app.post('/campaigns/:id/resume', { preHandler: operate, schema: { tags: ['campaigns'], params: IdParams } }, async (req) => {
+    await withTx(db, (tx) => life.resume(tx, req.params.id, actor(req)));
+    return loadCampaign(db, req.params.id);
+  });
+  app.post(
+    '/campaigns/:id/cancel',
+    { preHandler: operate, schema: { tags: ['campaigns'], summary: 'Cancel every unsent message. Messages already confirmed for sending cannot be recalled.', params: IdParams, body: Reason } },
+    async (req) => ({ ...(await withTx(db, (tx) => life.cancel(tx, req.params.id, req.body.reason, actor(req)))), campaign: await loadCampaign(db, req.params.id) }),
+  );
+
+  app.get('/campaigns/:id/progress', { preHandler: read, schema: { tags: ['campaigns'], params: IdParams } }, async (req) => {
+    const c = await loadCampaign(db, req.params.id);
+    if (!c) throw notFound('Campaign');
+    return { status: c.status, pause_reason: c.pause_reason, ...(await campaignProgress(db, req.params.id)) };
+  });
+
+  app.get('/campaigns/:id/report', { preHandler: read, schema: { tags: ['campaigns'], params: IdParams } }, async (req) => {
+    const r = await campaignReport(db, req.params.id);
+    if (!r) throw notFound('Campaign');
+    return r;
+  });
+
+  app.get(
+    '/campaigns/:id/report.csv',
+    { preHandler: [app.authenticate, requirePerm('reports.export')], schema: { tags: ['campaigns'], summary: 'Per-recipient results as CSV (masked numbers unless contacts.read_full)', params: IdParams } },
+    async (req, reply) => {
+      const c = await loadCampaign(db, req.params.id);
+      if (!c) throw notFound('Campaign');
+      const full = can(req, 'contacts.read_full');
+      await audit(db, { ...actor(req), action: 'report.exported', entityType: 'campaign', entityId: req.params.id, details: { full_numbers: full } });
+      const pageSize = 1000;
+      async function* gen() {
+        yield CSV_BOM + csvRow(['phone', 'first_name', 'last_name', 'reference_no', 'decision', 'exclusion_reason', 'status', 'delivery_state',
+          'attempts', 'queued_at', 'submitted_at', 'delivered_at', 'last_error_code', 'last_error_category', 'opted_out_now', 'segments']);
+        let after = '00000000-0000-0000-0000-000000000000';
+        for (;;) {
+          const { rows } = await db.query(
+            `SELECT r.id, r.phone_e164, ct.first_name, ct.last_name, ct.reference_no, r.decision, r.exclusion_reason,
+                    m.status, m.delivery_state, m.attempt_count, m.queued_at, m.submitted_at, m.delivered_at, m.last_error_code,
+                    m.last_error_category, r.segment_count,
+                    EXISTS (SELECT 1 FROM suppressions s WHERE s.phone_e164 = r.phone_e164 AND s.lifted_at IS NULL) AS opted_out
+               FROM campaign_recipients r JOIN contacts ct ON ct.id = r.contact_id
+               LEFT JOIN messages m ON m.campaign_recipient_id = r.id
+              WHERE r.campaign_id = $1 AND r.id > $2 ORDER BY r.id LIMIT $3`,
+            [req.params.id, after, pageSize],
+          );
+          for (const r of rows) {
+            yield csvRow([full ? r.phone_e164 : maskPhone(r.phone_e164), r.first_name, r.last_name, r.reference_no, r.decision, r.exclusion_reason,
+              r.status, r.delivery_state, r.attempt_count, r.queued_at, r.submitted_at, r.delivered_at, r.last_error_code, r.last_error_category,
+              r.opted_out, r.segment_count]);
+          }
+          if (rows.length < pageSize) break;
+          after = rows[rows.length - 1].id;
+        }
+      }
+      const safeName = String(c.name).replace(/[^A-Za-z0-9_-]+/g, '_').slice(0, 50);
+      reply.header('content-type', 'text/csv; charset=utf-8').header('content-disposition', `attachment; filename="campaign-${safeName}.csv"`);
+      return reply.send(Readable.from(gen()));
+    },
+  );
+
+  app.post(
+    '/campaigns/:id/retry-failed',
+    {
+      preHandler: [app.authenticate, requirePerm('messages.retry')],
+      schema: {
+        tags: ['campaigns'],
+        summary: 'Give every dead-lettered message (temporary errors that used up their automatic retries) one more attempt. Permanent rejections are not included.',
+        params: IdParams,
+        body: Type.Object({ note: Type.String({ minLength: 3, maxLength: 300 }) }, { additionalProperties: false }),
+      },
+    },
+    async (req) =>
+      withTx(db, async (tx) => {
+        const c = await tx.query<{ status: string }>('SELECT status FROM campaigns WHERE id = $1 FOR UPDATE', [req.params.id]);
+        if (!c.rows[0]) throw notFound('Campaign');
+        if (c.rows[0].status === 'CANCELLED') throw conflict('CAMPAIGN_CANCELLED', 'The campaign was cancelled');
+        const r = await tx.query<{ id: string }>(
+          `UPDATE messages m SET status = 'QUEUED', next_attempt_at = now(), max_attempts = least(10, attempt_count + 1),
+                  dead_lettered_at = NULL, finalized_at = NULL
+            WHERE m.campaign_id = $1 AND m.status = 'FAILED' AND m.dead_lettered_at IS NOT NULL
+              AND m.phone_e164 IS NOT NULL
+              AND NOT EXISTS (SELECT 1 FROM suppressions s WHERE s.phone_e164 = m.phone_e164 AND s.lifted_at IS NULL)
+            RETURNING m.id`,
+          [req.params.id],
+        );
+        if (r.rowCount) {
+          await tx.query(`INSERT INTO retry_jobs (message_id, kind, reason, requested_by) SELECT unnest($1::uuid[]), 'MANUAL', $2, $3`, [r.rows.map((x) => x.id), req.body.note, req.admin!.id]);
+          await tx.query(`UPDATE campaigns SET status = 'RUNNING', completed_at = NULL WHERE id = $1 AND status = 'COMPLETED'`, [req.params.id]);
+        }
+        await audit(tx, { ...actor(req), action: 'campaign.retry_failed', entityType: 'campaign', entityId: req.params.id, details: { requeued: r.rowCount, note: req.body.note } });
+        return { requeued: r.rowCount };
+      }),
   );
 };
 

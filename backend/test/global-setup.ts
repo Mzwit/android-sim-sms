@@ -12,5 +12,7 @@ export default async function setup() {
   await c.end();
   const db = createPool(url, 1);
   await runMigrations(db);
+  // Snapshot default settings so each test can restore them.
+  await db.query('CREATE TABLE _test_settings_defaults AS SELECT key, value FROM app_settings');
   await db.end();
 }

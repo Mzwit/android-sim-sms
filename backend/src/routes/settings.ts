@@ -27,6 +27,13 @@ const SETTING_SCHEMAS: Record<Exclude<SettingKey, 'kill_switch'>, TSchema> = {
     { additionalProperties: false },
   ),
   test_numbers: Type.Array(Type.String({ maxLength: 40 }), { maxItems: 20 }),
+  opt_out_keywords: Type.Array(Type.String({ minLength: 2, maxLength: 20 }), { minItems: 1, maxItems: 30 }),
+  gateway_offline_minutes: Type.Integer({ minimum: 1, maximum: 120 }),
+  retry_policy: Type.Object(
+    { base_seconds: Type.Integer({ minimum: 5, maximum: 3600 }), max_seconds: Type.Integer({ minimum: 10, maximum: 86400 }) },
+    { additionalProperties: false },
+  ),
+  sending_confirm_grace_seconds: Type.Integer({ minimum: 30, maximum: 3600 }),
 };
 
 const routes: FastifyPluginAsyncTypebox = async (app) => {
@@ -67,6 +74,7 @@ const routes: FastifyPluginAsyncTypebox = async (app) => {
         }
         value = out;
       }
+      if (key === 'opt_out_keywords') value = [...new Set((value as string[]).map((k) => k.trim().toUpperCase()))];
       return withTx(db, async (tx) => {
         const before = await tx.query('SELECT value FROM app_settings WHERE key = $1 FOR UPDATE', [key]);
         await tx.query('UPDATE app_settings SET value = $2, updated_by = $3, updated_at = now() WHERE key = $1', [key, JSON.stringify(value), req.admin!.id]);

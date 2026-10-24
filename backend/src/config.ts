@@ -18,7 +18,19 @@ export interface Config {
   loginLockMinutes: number;
   apiRateLimitPerMinute: number;
   loginRateLimitPerMinute: number;
+  gatewayRateLimitPerMinute: number;
   enableDocs: boolean;
+  /** Public base URL phones use to reach this server (QR code). */
+  publicUrl?: string;
+  /** Create this super admin at startup if no administrator exists (temporary password is logged once). */
+  bootstrapAdminEmail?: string;
+  bootstrapAdminName?: string;
+  /** Directory with the built dashboard (served at /). */
+  dashboardDir?: string;
+  /** Run background workers (lease sweeper, scheduler, retention) in this process. */
+  runWorkers: boolean;
+  /** Allow approving campaigns that contain SEED_DATA contacts (simulator/load tests only). */
+  allowSeedCampaigns: boolean;
 }
 
 function req(env: NodeJS.ProcessEnv, key: string): string {
@@ -73,9 +85,17 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     loginLockMinutes: int(env, 'LOGIN_LOCK_MINUTES', 15, 1, 24 * 60),
     apiRateLimitPerMinute: int(env, 'API_RATE_LIMIT_PER_MINUTE', 300, 10, 100_000),
     loginRateLimitPerMinute: int(env, 'LOGIN_RATE_LIMIT_PER_MINUTE', 10, 1, 100_000),
+    // A phone sending 1 SMS/second makes ~3 requests/second; 600/min leaves headroom.
+    gatewayRateLimitPerMinute: int(env, 'GATEWAY_RATE_LIMIT_PER_MINUTE', 600, 60, 1_000_000),
     enableDocs: bool(env, 'ENABLE_API_DOCS', nodeEnv !== 'production'),
+    publicUrl: (env.PUBLIC_URL?.trim() || env.RENDER_EXTERNAL_URL?.trim() || undefined)?.replace(/\/+$/, ''),
+    bootstrapAdminEmail: env.BOOTSTRAP_ADMIN_EMAIL?.trim() || undefined,
+    bootstrapAdminName: env.BOOTSTRAP_ADMIN_NAME?.trim() || undefined,
+    dashboardDir: env.DASHBOARD_DIR?.trim() || undefined,
+    runWorkers: bool(env, 'RUN_WORKERS', nodeEnv !== 'test'),
+    allowSeedCampaigns: bool(env, 'ALLOW_SEED_CAMPAIGNS', false),
   };
-  if (cfg.nodeEnv === 'production' && !cfg.tlsCertPath) {
+  if (cfg.nodeEnv === 'production' && !cfg.tlsCertPath && !cfg.trustProxy) {
     // Allowed (e.g. behind a TLS reverse proxy), but loudly flagged at startup.
     process.emitWarning('Running in production without TLS_CERT_PATH: traffic is unencrypted unless a TLS proxy is in front.');
   }

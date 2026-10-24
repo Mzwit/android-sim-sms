@@ -47,6 +47,19 @@ const routes: FastifyPluginAsyncTypebox = async (app) => {
            RETURNING id, purpose, status, source, evidence, effective_at, recorded_at`,
           [req.params.id, b.purpose ?? 'general', b.status, b.source, b.evidence ?? null, b.effective_at ?? null, req.admin!.id],
         );
+        let cancelled = 0;
+        if (b.status === 'WITHDRAWN') {
+          // Withdrawal takes effect immediately for unsent messages that relied on this consent.
+          const purpose = b.purpose ?? 'general';
+          const r = await tx.query(
+            `UPDATE messages m SET status = 'CANCELLED', last_error_category = 'SUPPRESSED', last_error_code = 'CONSENT_WITHDRAWN', finalized_at = now()
+               FROM campaigns c WHERE c.id = m.campaign_id AND m.contact_id = $1 AND m.status = 'QUEUED'
+                AND ($2 = 'general' OR c.consent_purpose = $2)`,
+            [req.params.id, purpose],
+          );
+          cancelled = r.rowCount ?? 0;
+        }
+        rows[0].cancelled_messages = cancelled;
         await audit(tx, { ...actor(req), action: `consent.${b.status.toLowerCase()}`, entityType: 'contact', entityId: req.params.id, details: { purpose: rows[0].purpose, source: b.source } });
         return rows[0];
       });

@@ -4,6 +4,11 @@ import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
+import multipart from '@fastify/multipart';
+import fastifyStatic from '@fastify/static';
+import { existsSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { readFileSync } from 'node:fs';
 import type { Config } from './config.js';
@@ -19,6 +24,11 @@ import campaignRoutes from './routes/campaigns.js';
 import auditRoutes from './routes/audit.js';
 import settingsRoutes from './routes/settings.js';
 import utilRoutes from './routes/util.js';
+import gatewayDeviceRoutes from './routes/gateway-device.js';
+import gatewayRoutes from './routes/gateways.js';
+import messageRoutes from './routes/messages.js';
+import contactIoRoutes from './routes/contacts-io.js';
+import systemRoutes from './routes/system.js';
 
 export interface AppDeps {
   config: Config;
@@ -73,6 +83,7 @@ export async function buildApp(deps: AppDeps) {
     hsts: https ? { maxAge: 15552000 } : false,
   });
   await app.register(cookie);
+  await app.register(multipart, { limits: { fileSize: 10 * 1024 * 1024, files: 1, fields: 5 } });
   await app.register(rateLimit, {
     global: true,
     max: config.apiRateLimitPerMinute,
@@ -132,9 +143,22 @@ export async function buildApp(deps: AppDeps) {
     return reply.code(500).send({ error: { code: 'INTERNAL', message: 'Internal server error' } });
   });
 
-  app.setNotFoundHandler((req, reply) =>
-    reply.code(404).send({ error: { code: 'NOT_FOUND', message: `Route ${req.method} ${req.url} not found` } }),
-  );
+  // The web dashboard (React build) is served from the same origin as the API.
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  const dashboardDir = [config.dashboardDir, path.resolve(here, '../../dashboard/dist'), path.resolve(here, '../../../dashboard/dist')]
+    .filter((d): d is string => Boolean(d))
+    .find((d) => existsSync(path.join(d, 'index.html')));
+  if (dashboardDir) {
+    await app.register(fastifyStatic, { root: dashboardDir, prefix: '/', wildcard: false, index: ['index.html'], maxAge: '1h', immutable: false });
+  }
+
+  app.setNotFoundHandler((req, reply) => {
+    // Client-side routes of the dashboard fall back to index.html.
+    if (dashboardDir && req.method === 'GET' && !req.url.startsWith('/api/') && !req.url.startsWith('/docs') && (req.headers.accept ?? '').includes('text/html')) {
+      return reply.header('cache-control', 'no-cache').sendFile('index.html');
+    }
+    return reply.code(404).send({ error: { code: 'NOT_FOUND', message: `Route ${req.method} ${req.url} not found` } });
+  });
 
   // Liveness/readiness: no auth, reveals nothing sensitive.
   app.get('/healthz', { config: { rateLimit: false }, schema: { hide: true } }, async (_req, reply) => {
@@ -157,6 +181,11 @@ export async function buildApp(deps: AppDeps) {
       await api.register(auditRoutes);
       await api.register(settingsRoutes);
       await api.register(utilRoutes);
+      await api.register(gatewayDeviceRoutes);
+      await api.register(gatewayRoutes);
+      await api.register(messageRoutes);
+      await api.register(contactIoRoutes);
+      await api.register(systemRoutes);
     },
     { prefix: API_PREFIX },
   );

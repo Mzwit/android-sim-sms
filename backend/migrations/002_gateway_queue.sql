@@ -23,6 +23,8 @@ ALTER TABLE sms_submission_attempts
   ADD COLUMN parts_failed   smallint NOT NULL DEFAULT 0,
   ADD COLUMN detail         text;
 CREATE INDEX idx_attempts_pending ON sms_submission_attempts(gateway_id) WHERE outcome = 'PENDING';
+CREATE INDEX idx_attempts_reported ON sms_submission_attempts(reported_at DESC);
+CREATE INDEX idx_attempts_gateway_reported ON sms_submission_attempts(gateway_id, reported_at DESC);
 
 -- Per-part sent results, so duplicate callbacks are idempotent.
 CREATE TABLE sms_part_results (
