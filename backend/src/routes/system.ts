@@ -25,7 +25,7 @@ const routes: FastifyPluginAsyncTypebox = async (app) => {
       db.query<{ status: string; n: number }>(`SELECT status, count(*)::int AS n FROM campaigns GROUP BY 1`),
       db.query<{ status: string; n: number }>(`SELECT status, count(*)::int AS n FROM messages WHERE NOT is_test GROUP BY 1`),
       db.query<{ delivery_state: string; n: number }>(`SELECT delivery_state, count(*)::int AS n FROM messages WHERE NOT is_test GROUP BY 1`),
-      db.query<{ n: number }>(`SELECT count(*)::int AS n FROM messages WHERE submitted_at > now() - interval '15 minutes'`),
+      db.query<{ n: number; first: Date | null }>(`SELECT count(*)::int AS n, min(submitted_at) AS first FROM messages WHERE submitted_at > now() - interval '15 minutes'`),
       db.query<{ total: number; online: number; paused: number }>(
         `SELECT count(*)::int AS total, count(*) FILTER (WHERE last_seen_at > now() - make_interval(mins => $1))::int AS online,
                 count(*) FILTER (WHERE is_paused)::int AS paused FROM gateways WHERE status = 'ACTIVE'`,
@@ -58,7 +58,13 @@ const routes: FastifyPluginAsyncTypebox = async (app) => {
         awaiting_report: d.AWAITING_REPORT ?? 0,
         no_report: d.NO_REPORT ?? 0,
       },
-      rate_per_minute: Math.round((rate.rows[0]!.n / 15) * 10) / 10,
+      // Same measurement as campaign progress: submissions over the window actually observed (max 15 min).
+      rate_per_minute: (() => {
+        const r = rate.rows[0]!;
+        if (!r.n || !r.first) return 0;
+        const span = Math.min(15, Math.max(1, (Date.now() - new Date(r.first).getTime()) / 60_000));
+        return Math.round((r.n / span) * 10) / 10;
+      })(),
       gateways: gateways.rows[0],
       today: { ...today.rows[0], daily_segment_budget: dailyBudget },
       alerts: alerts.rows[0],

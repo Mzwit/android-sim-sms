@@ -62,7 +62,7 @@ Build the system as specified, behind a **pluggable `SmsTransport` interface**. 
                                                                       │ LAN Wi-Fi (Mode A)
                                                                       │ or USB via `adb reverse` (Mode B)
 ┌──────────────────────────── Android phone ───────────────────────────┴─────┐
-│  Foreground service ── Room DB (local job journal)                         │
+│  Foreground service ── SQLite journal (jobs + outbox)                      │
 │    pulls leased jobs → SmsManager(subId).sendMultipartTextMessage          │
 │    sentIntent  → SUBMITTED / FAILED(code)                                  │
 │    deliveryIntent → DELIVERED / FAILED (only if carrier returns a report)  │
@@ -77,6 +77,8 @@ Build the system as specified, behind a **pluggable `SmsTransport` interface**. 
   - The QR holds a one-time code (stored hashed, short expiry) and the PC certificate's SHA-256 fingerprint.
   - The phone pins that certificate, which gives real TLS on a LAN with no public CA.
   - The phone then receives a device token, stored in Android Keystore. Only the token's hash is stored on the PC.
+- **Hosting.** The same design works with the server on your PC (phone on the same Wi-Fi, or USB) or in the cloud (Render + Neon free tiers; phone connects over the internet with normal HTTPS). See [deployment.md](deployment.md).
+- **Confirm before every SMS.** Immediately before sending each message the phone asks the server `POST /gateway/attempts/:id/confirm`. Only an explicit `SEND` answer allows the radio call. This is what makes "never confirmed ⇒ never sent" provable, and lets the kill switch, opt-outs and cancellations take effect within seconds.
 - **Leases, not pushes.**
   - The phone asks for a small batch (`batch_limit`, default 20) under a time-limited lease and journals it in Room **before** sending.
   - If the PC disappears, the phone finishes the leased batch and reports back on reconnect.
@@ -126,7 +128,7 @@ What does work is `adb reverse tcp:8443 tcp:8443`. The phone then reaches the PC
 
 | Part | Technologies |
 |---|---|
-| Android | Kotlin, minSdk 26, targetSdk 35, Room, WorkManager, OkHttp |
+| Android | Kotlin, minSdk 26, targetSdk 35, SQLite journal (SQLiteOpenHelper), WorkManager watchdog, OkHttp, ZXing QR scanner. Built and signed by GitHub Actions |
 | Backend | Node.js 20+, Fastify 5, TypeScript, PostgreSQL 16 via `pg` with plain SQL migrations, TypeBox validation (also generates OpenAPI), argon2id (`@node-rs/argon2`), Vitest |
 | Dashboard | React + Vite + TypeScript (Phase 4/6), served by the backend |
 | Testing | A mock telephony layer runs the 6,000-recipient load test with no airtime. Real-device tests use only authorised test numbers. |

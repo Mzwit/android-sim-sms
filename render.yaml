@@ -1,0 +1,41 @@
+# Render Blueprint: free web service (backend + dashboard). Database: Neon free tier.
+# Render → New → Blueprint → choose this repository. You will be asked for the two
+# values marked sync: false.
+services:
+  - type: web
+    name: sim-sms-gateway
+    runtime: node
+    plan: free
+    region: frankfurt
+    branch: main
+    buildCommand: >-
+      cd dashboard && npm ci && npm run build &&
+      cd ../backend && npm ci --include=dev && npm run build && npm prune --omit=dev
+    startCommand: cd backend && node dist/src/server.js
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      # Render terminates HTTPS and forwards to the app.
+      - key: TRUST_PROXY
+        value: "true"
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: DB_POOL_MAX
+        value: "5"
+      - key: ENABLE_API_DOCS
+        value: "true"
+      # Paste the Neon connection string (postgresql://…?sslmode=require).
+      - key: DATABASE_URL
+        sync: false
+      # Your email. On the very first start, if no administrator exists, one is created
+      # and its temporary password is printed once in the Render logs.
+      - key: BOOTSTRAP_ADMIN_EMAIL
+        sync: false
+      - key: BOOTSTRAP_ADMIN_NAME
+        value: Administrator

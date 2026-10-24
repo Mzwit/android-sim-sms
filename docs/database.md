@@ -66,6 +66,12 @@ erDiagram
 | | `audit_logs` | Append-only. A trigger blocks UPDATE, and blocks DELETE unless the retention purge flag is set. |
 | | `app_settings` | Kill switch, default country, budgets, retention, test numbers. |
 
+Migration `002_gateway_queue.sql` adds:
+- `sms_part_results`: one row per sentIntent result per part, for idempotency.
+- `contact_imports` and `contact_import_rows`: staged imports.
+- `alerts`.
+- Queue bookkeeping columns: lease expiry and confirmation time on attempts, cooldown counters on campaigns, and erasure support.
+
 ## Guarantees enforced by the database (not just the code)
 
 - **One live contact per E.164 number** (partial unique index). Numbers that only *look* alike are different rows.
@@ -79,7 +85,13 @@ erDiagram
 
 ## Message states
 
-`QUEUED → LEASED → SENDING → SUBMITTED → (DELIVERED | FAILED)`, plus `UNKNOWN` and `CANCELLED`. `delivery_state` separately tracks `NONE / AWAITING_REPORT / NO_REPORT / CONFIRMED / FAILED`, so *submitted* is never shown as *delivered*. Phases 4 and 5 implement the transitions.
+`QUEUED → LEASED → SENDING → SUBMITTED → (DELIVERED | FAILED)`, plus `UNKNOWN` and `CANCELLED`. `delivery_state` separately tracks `NONE / AWAITING_REPORT / NO_REPORT / CONFIRMED / FAILED`, so *submitted* is never shown as *delivered*.
+
+- **LEASED:** the server gave the message to a phone.
+- **SENDING:** the phone confirmed it is about to send.
+- **Expired leases:**
+  - LEASED past its expiry goes back to QUEUED. It was provably not sent, because sending requires confirmation.
+  - SENDING with no result long after expiry becomes UNKNOWN. It is never retried automatically, and a late report from the phone still resolves it.
 
 ## Built-in roles
 
@@ -132,4 +144,8 @@ Register-ScheduledTask -TaskName 'SMS gateway backup' -Action $action -Trigger $
 
 ## Retention
 
-Settings key `retention` (defaults: messages 365 days, health events 30, audit log 1,095, sessions 30). The scheduled purge job that applies these is part of Phase 6. Until then nothing is deleted automatically. The audit log can only be purged by that job; the database trigger refuses other deletes.
+Settings key `retention` (defaults: finished messages 365 days, phone health events 30, audit log 1,095, old sessions 30).
+- A background job applies these once a day.
+- **Settings → Data retention** shows what would be deleted now.
+- Opt-outs are never deleted.
+- The audit log can only be purged by this job; the database trigger refuses any other delete.

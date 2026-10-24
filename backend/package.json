@@ -14,7 +14,10 @@
     "openapi": "tsx src/cli/export-openapi.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "simulate": "tsx src/cli/simulate-gateway.ts",
+    "simulate:prod": "node dist/src/cli/simulate-gateway.js",
+    "cert": "tsx src/cli/make-cert.ts"
   },
   "license": "UNLICENSED",
   "dependencies": {

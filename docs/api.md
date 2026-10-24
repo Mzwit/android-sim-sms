@@ -46,7 +46,7 @@ Every error has the same shape:
 
 The dashboard generates one key per "Create campaign" form, so a double-click or network retry is harmless.
 
-## Endpoints (Phase 2)
+## Administrator endpoints
 
 | Method | Path | Permission | Notes |
 |---|---|---|---|
@@ -80,7 +80,63 @@ The dashboard generates one key per "Create campaign" form, so a double-click or
 | POST | `/tools/sms-analyze` | signed in | Encoding, segments, characters that force Unicode. |
 | POST | `/tools/phone-check` | signed in | Normalise up to 100 numbers without saving them. |
 
-Later phases add `/gateways` (pairing, health, queue lease, callbacks), contact import and export, campaign approval, start, pause and cancel, retries, reconciliation and reports.
+| POST | `/contacts/import` | contacts.write | Multipart `file` (.csv/.xlsx), optional `country`. Stages and validates every row; returns a summary and the problem rows. |
+| GET | `/contacts/imports/:id`, `/contacts/imports/:id/problems.csv` | contacts.read | |
+| POST | `/contacts/imports/:id/commit`, `/discard` | contacts.write | `on_existing` skip/update, `group_ids`, `add_tags`, `store_invalid`, `default_consent`. |
+| GET | `/contacts/import/template.csv` | signed in | |
+| GET | `/contacts/export.csv` | contacts.export | Streamed. Masked numbers unless contacts.read_full. Audited. |
+| POST | `/contacts/:id/erase` | contacts.delete | Data-protection erasure (opt-out kept). |
+| GET | `/contacts/:id/messages` | campaigns.read | Per-recipient history. |
+| POST | `/campaigns/:id/test` | campaigns.write | `{ phone }`: must be an authorised test number. |
+| POST | `/campaigns/:id/submit` | campaigns.write | DRAFT → PENDING_APPROVAL. |
+| POST | `/campaigns/:id/return-to-draft` | campaigns.approve | `{ note }` |
+| POST | `/campaigns/:id/approve` | campaigns.approve | `{ confirm_name }`. Re-checks everything, freezes recipients, queues messages. |
+| POST | `/campaigns/:id/start` · `/pause` · `/resume` · `/cancel` | campaigns.operate | pause/cancel take `{ reason }`. |
+| GET | `/campaigns/:id/progress` | campaigns.read | Counts, measured rate, ETA (estimate). |
+| GET | `/campaigns/:id/report`, `/report.csv` | campaigns.read / reports.export | |
+| POST | `/campaigns/:id/retry-failed` | messages.retry | One more attempt for dead letters. |
+| GET | `/messages`, `/messages/:id` | campaigns.read | Filters: `status`, `campaign_id`, `dead_letter`, `is_test`, `phone`, `contact_id`. Detail has attempts, part results, delivery reports, retries, reconciliations. |
+| POST | `/messages/:id/retry` | messages.retry | FAILED only. `{ note, force? }` |
+| POST | `/messages/:id/reconcile` | messages.retry | UNKNOWN only. `{ decision: CONFIRMED_SENT \| CONFIRMED_NOT_SENT \| RESEND \| ABANDON, note }` |
+| GET | `/gateways`, `/gateways/:id/health` | gateways.read | |
+| POST | `/gateways/pairing-codes` | gateways.manage | `{ label }` → code, QR (PNG data URL), payload. |
+| PATCH | `/gateways/:id` | gateways.manage | `name`, `send_interval_ms`, `batch_limit`. |
+| POST | `/gateways/:id/pause` · `/resume` | campaigns.operate | `{ reason }` |
+| POST | `/gateways/:id/emergency-stop` · `/revoke` | gateways.manage | `{ reason }` |
+| GET | `/dashboard/summary` | signed in | |
+| GET | `/alerts`, POST `/alerts/:id/ack` | signed in | |
+| POST | `/maintenance/retention` | settings.write | `{ dry_run }` |
+
+## Phone (gateway) protocol
+
+The Android app authenticates with `Authorization: Gateway <device token>`. Admin sessions are never accepted here, and gateway tokens never work on admin routes.
+
+| Call | Purpose |
+|---|---|
+| `POST /gateway/pair` `{ code, device_model, android_version, app_version }` | Exchange a one-time code for a device token and configuration. |
+| `POST /gateway/heartbeat` `{ battery_pct, signal_level, network_type, sim_state, permissions, kind, … }` | Health in; configuration and commands out (`paused`, `emergency_stop`, `kill_switch`, `send_interval_ms`, `batch_limit`, `test_numbers`, `opt_out_keywords`). |
+| `POST /gateway/sim` `{ subscription_id, slot_index, display_name, carrier_name }` | Report the SIM chosen for sending. |
+| `POST /gateway/lease` `{ max }` | Receive jobs `{ attempt_id, message_id, phone, body, segments, lease_expires_at }`, or `idle_reason` + `next_poll_ms`. |
+| `POST /gateway/attempts/:attempt_id/confirm` | Ask permission immediately before sending: `{ decision: "SEND" }` or `{ decision: "DO_NOT_SEND", reason }`. **The phone never sends without SEND.** |
+| `POST /gateway/events` `{ events: [...] }` | Batched, idempotent reports (each event has a unique `id`). |
+| `POST /gateway/release` `{ attempt_ids, reason }` | Hand back jobs that will not be sent. |
+
+Event types:
+
+| type | Fields | Meaning |
+|---|---|---|
+| `PART_SENT` | `attempt_id, part_index, parts_total, result_code` | sentIntent result for one part (`-1` = RESULT_OK). |
+| `DELIVERY` | `attempt_id, part_index, tp_status` | Delivery report (TP-Status 0x00–0x1F delivered, 0x20–0x3F pending, ≥0x40 failed). |
+| `SEND_ERROR` | `attempt_id, app_code, detail?` | Failed before reaching the radio (PERMISSION_DENIED, SIM_NOT_READY, SIM_CHANGED, SEND_EXCEPTION, INVALID_NUMBER_LOCAL). |
+| `SUBMIT_UNKNOWN` | `attempt_id, app_code` | Handed to Android but no result (SENT_TIMEOUT, PROCESS_KILLED). The message becomes UNKNOWN. |
+| `NOT_SENT` | `attempt_id, reason` | Certainly not sent. Requeued without using an attempt. |
+| `INBOUND` | `from, body` | Only sent for replies matching an opt-out keyword. |
+| `DIAGNOSTIC_SMS` | `to, result_code` | Result of a test SMS from the app's Diagnostics screen. |
+
+The server classifies Android result codes (see `backend/src/lib/sms-errors.ts`):
+- **Transient** codes (e.g. `GENERIC_FAILURE`, `NO_SERVICE`) are retried with exponential backoff and jitter.
+- **Permanent** codes (e.g. `NETWORK_REJECT`, `FDN_CHECK_FAILURE`) are never retried automatically.
+- **Phone-level** codes (`LIMIT_EXCEEDED`, `RADIO_OFF`, missing permission, SIM problems) pause the phone and return the message to the queue without spending one of its attempts.
 
 ## Examples (PowerShell)
 

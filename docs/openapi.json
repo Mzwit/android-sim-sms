@@ -1662,6 +1662,414 @@
         }
       }
     },
+    "/api/v1/campaigns/{id}/test": {
+      "post": {
+        "summary": "Queue the personalised message to one authorised test number (Settings → test_numbers). Sent before any campaign message.",
+        "tags": [
+          "campaigns"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "phone"
+                ],
+                "properties": {
+                  "phone": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 40
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/campaigns/{id}/submit": {
+      "post": {
+        "summary": "DRAFT → PENDING_APPROVAL (runs all recipient checks)",
+        "tags": [
+          "campaigns"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/campaigns/{id}/return-to-draft": {
+      "post": {
+        "tags": [
+          "campaigns"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "note"
+                ],
+                "properties": {
+                  "note": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 500
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/campaigns/{id}/approve": {
+      "post": {
+        "summary": "Approve and queue. Re-runs every check, freezes the recipient list and creates one message per recipient. Requires typing the campaign name.",
+        "tags": [
+          "campaigns"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "confirm_name"
+                ],
+                "properties": {
+                  "confirm_name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 150
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/campaigns/{id}/start": {
+      "post": {
+        "summary": "APPROVED/SCHEDULED → RUNNING now",
+        "tags": [
+          "campaigns"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/campaigns/{id}/pause": {
+      "post": {
+        "tags": [
+          "campaigns"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "reason"
+                ],
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 300
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/campaigns/{id}/resume": {
+      "post": {
+        "tags": [
+          "campaigns"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/campaigns/{id}/cancel": {
+      "post": {
+        "summary": "Cancel every unsent message. Messages already confirmed for sending cannot be recalled.",
+        "tags": [
+          "campaigns"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "reason"
+                ],
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 300
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/campaigns/{id}/progress": {
+      "get": {
+        "tags": [
+          "campaigns"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/campaigns/{id}/report": {
+      "get": {
+        "tags": [
+          "campaigns"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/campaigns/{id}/report.csv": {
+      "get": {
+        "summary": "Per-recipient results as CSV (masked numbers unless contacts.read_full)",
+        "tags": [
+          "campaigns"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/campaigns/{id}/retry-failed": {
+      "post": {
+        "summary": "Give every dead-lettered message (temporary errors that used up their automatic retries) one more attempt. Permanent rejections are not included.",
+        "tags": [
+          "campaigns"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "note"
+                ],
+                "properties": {
+                  "note": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 300
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
     "/api/v1/audit-logs": {
       "get": {
         "summary": "Search the append-only audit trail",
@@ -1913,6 +2321,1638 @@
             }
           }
         },
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/gateway/pair": {
+      "post": {
+        "summary": "Exchange a one-time pairing code (from the dashboard QR) for a device token",
+        "tags": [
+          "gateway (phone)"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "code"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "minLength": 6,
+                    "maxLength": 20
+                  },
+                  "device_model": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "android_version": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "app_version": {
+                    "type": "string",
+                    "maxLength": 20
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/gateway/heartbeat": {
+      "post": {
+        "summary": "Report health; receive current configuration and commands",
+        "tags": [
+          "gateway (phone)"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "recorded_at": {
+                    "type": "string",
+                    "maxLength": 40
+                  },
+                  "kind": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "HEARTBEAT"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "SIM_CHANGED"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "PERMISSION_LOST"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "SERVICE_STARTED"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "SERVICE_STOPPED"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "EMERGENCY_STOP"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "ERROR"
+                        ]
+                      }
+                    ]
+                  },
+                  "battery_pct": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100,
+                    "nullable": true
+                  },
+                  "is_charging": {
+                    "type": "boolean",
+                    "nullable": true
+                  },
+                  "signal_level": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4,
+                    "nullable": true
+                  },
+                  "signal_dbm": {
+                    "type": "integer",
+                    "minimum": -200,
+                    "maximum": 0,
+                    "nullable": true
+                  },
+                  "network_type": {
+                    "type": "string",
+                    "maxLength": 30,
+                    "nullable": true
+                  },
+                  "service_state": {
+                    "type": "string",
+                    "maxLength": 30,
+                    "nullable": true
+                  },
+                  "sim_state": {
+                    "type": "string",
+                    "maxLength": 30,
+                    "nullable": true
+                  },
+                  "queue_pending": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100000
+                  },
+                  "service_running": {
+                    "type": "boolean"
+                  },
+                  "permissions": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "boolean"
+                    }
+                  },
+                  "app_version": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "details": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/gateway/sim": {
+      "post": {
+        "summary": "Report the SIM selected for sending",
+        "tags": [
+          "gateway (phone)"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "subscription_id"
+                ],
+                "properties": {
+                  "subscription_id": {
+                    "type": "integer"
+                  },
+                  "slot_index": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 8
+                  },
+                  "display_name": {
+                    "type": "string",
+                    "maxLength": 60
+                  },
+                  "carrier_name": {
+                    "type": "string",
+                    "maxLength": 60
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/gateway/lease": {
+      "post": {
+        "summary": "Receive a batch of messages to send (each must still be confirmed just before sending)",
+        "tags": [
+          "gateway (phone)"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "max": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 200,
+                    "default": 20
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/gateway/attempts/{id}/confirm": {
+      "post": {
+        "summary": "Ask permission to send one leased message now. The phone must not send unless the answer is SEND.",
+        "tags": [
+          "gateway (phone)"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/gateway/events": {
+      "post": {
+        "summary": "Report sent results, delivery reports, opt-out replies and diagnostics (idempotent, batched)",
+        "tags": [
+          "gateway (phone)"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "events"
+                ],
+                "properties": {
+                  "events": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "required": [
+                            "id",
+                            "type",
+                            "attempt_id",
+                            "part_index",
+                            "parts_total",
+                            "result_code"
+                          ],
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "maxLength": 64
+                            },
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "PART_SENT"
+                              ]
+                            },
+                            "attempt_id": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "part_index": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 20
+                            },
+                            "parts_total": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 20
+                            },
+                            "result_code": {
+                              "type": "integer"
+                            },
+                            "at": {
+                              "type": "string",
+                              "maxLength": 40
+                            }
+                          }
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "id",
+                            "type",
+                            "attempt_id",
+                            "app_code"
+                          ],
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "maxLength": 64
+                            },
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "SEND_ERROR"
+                              ]
+                            },
+                            "attempt_id": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "app_code": {
+                              "type": "string",
+                              "maxLength": 40
+                            },
+                            "detail": {
+                              "type": "string",
+                              "maxLength": 300
+                            },
+                            "at": {
+                              "type": "string",
+                              "maxLength": 40
+                            }
+                          }
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "id",
+                            "type",
+                            "attempt_id",
+                            "app_code"
+                          ],
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "maxLength": 64
+                            },
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "SUBMIT_UNKNOWN"
+                              ]
+                            },
+                            "attempt_id": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "app_code": {
+                              "type": "string",
+                              "maxLength": 40
+                            },
+                            "at": {
+                              "type": "string",
+                              "maxLength": 40
+                            }
+                          }
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "id",
+                            "type",
+                            "attempt_id",
+                            "reason"
+                          ],
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "maxLength": 64
+                            },
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "NOT_SENT"
+                              ]
+                            },
+                            "attempt_id": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "reason": {
+                              "type": "string",
+                              "maxLength": 100
+                            },
+                            "at": {
+                              "type": "string",
+                              "maxLength": 40
+                            }
+                          }
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "id",
+                            "type",
+                            "attempt_id",
+                            "part_index",
+                            "tp_status"
+                          ],
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "maxLength": 64
+                            },
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "DELIVERY"
+                              ]
+                            },
+                            "attempt_id": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "part_index": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 20
+                            },
+                            "tp_status": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 255
+                            },
+                            "at": {
+                              "type": "string",
+                              "maxLength": 40
+                            }
+                          }
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "id",
+                            "type",
+                            "from",
+                            "body"
+                          ],
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "maxLength": 64
+                            },
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "INBOUND"
+                              ]
+                            },
+                            "from": {
+                              "type": "string",
+                              "maxLength": 40
+                            },
+                            "body": {
+                              "type": "string",
+                              "maxLength": 500
+                            },
+                            "at": {
+                              "type": "string",
+                              "maxLength": 40
+                            }
+                          }
+                        },
+                        {
+                          "type": "object",
+                          "required": [
+                            "id",
+                            "type",
+                            "to",
+                            "result_code"
+                          ],
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "maxLength": 64
+                            },
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "DIAGNOSTIC_SMS"
+                              ]
+                            },
+                            "to": {
+                              "type": "string",
+                              "maxLength": 40
+                            },
+                            "result_code": {
+                              "type": "integer",
+                              "nullable": true
+                            },
+                            "app_code": {
+                              "type": "string",
+                              "maxLength": 40
+                            },
+                            "at": {
+                              "type": "string",
+                              "maxLength": 40
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "minItems": 1,
+                    "maxItems": 200
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/gateway/release": {
+      "post": {
+        "summary": "Give back leased messages the phone will not send (pause, emergency stop, shutdown)",
+        "tags": [
+          "gateway (phone)"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "attempt_ids",
+                  "reason"
+                ],
+                "properties": {
+                  "attempt_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "minItems": 1,
+                    "maxItems": 200
+                  },
+                  "reason": {
+                    "type": "string",
+                    "maxLength": 100
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/gateway/config": {
+      "get": {
+        "tags": [
+          "gateway (phone)"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/gateways": {
+      "get": {
+        "summary": "Paired phones with health and today’s usage",
+        "tags": [
+          "gateways"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/gateways/{id}/health": {
+      "get": {
+        "tags": [
+          "gateways"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 720,
+              "default": 24
+            },
+            "in": "query",
+            "name": "hours",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/gateways/pairing-codes": {
+      "post": {
+        "summary": "Create a one-time pairing code and QR for a new phone (valid 10 minutes)",
+        "tags": [
+          "gateways"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "label"
+                ],
+                "properties": {
+                  "label": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 60
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/gateways/{id}": {
+      "patch": {
+        "summary": "Rename or change pacing. Interval is a floor; the phone never sends faster.",
+        "tags": [
+          "gateways"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 60
+                  },
+                  "send_interval_ms": {
+                    "type": "integer",
+                    "minimum": 1000,
+                    "maximum": 600000
+                  },
+                  "batch_limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 200
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/gateways/{id}/pause": {
+      "post": {
+        "summary": "Stop leasing new messages to this phone",
+        "tags": [
+          "gateways"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "reason"
+                ],
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 300
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/gateways/{id}/resume": {
+      "post": {
+        "summary": "Resume (also clears an emergency stop)",
+        "tags": [
+          "gateways"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "reason"
+                ],
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 300
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/gateways/{id}/emergency-stop": {
+      "post": {
+        "summary": "Emergency stop: the phone drops every unsent leased message at its next contact",
+        "tags": [
+          "gateways"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "reason"
+                ],
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 300
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/gateways/{id}/revoke": {
+      "post": {
+        "summary": "Permanently unpair this phone",
+        "tags": [
+          "gateways"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "reason"
+                ],
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 300
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/messages": {
+      "get": {
+        "summary": "Per-recipient message tracking. Use status=UNKNOWN for the reconciliation queue, dead_letter=true for exhausted retries.",
+        "tags": [
+          "messages"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "query",
+            "name": "campaign_id",
+            "required": false
+          },
+          {
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "QUEUED"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "LEASED"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "SENDING"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "SUBMITTED"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "DELIVERED"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "FAILED"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "UNKNOWN"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "CANCELLED"
+                  ]
+                }
+              ]
+            },
+            "in": "query",
+            "name": "status",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Z_]+$"
+            },
+            "in": "query",
+            "name": "delivery_state",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "dead_letter",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "is_test",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 40
+            },
+            "in": "query",
+            "name": "phone",
+            "required": false,
+            "description": "Full number or at least 4 trailing digits"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "query",
+            "name": "contact_id",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "in": "query",
+            "name": "page",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "in": "query",
+            "name": "page_size",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/messages/{id}": {
+      "get": {
+        "summary": "Full history: attempts, part results, delivery reports, retries, reconciliations",
+        "tags": [
+          "messages"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/messages/{id}/retry": {
+      "post": {
+        "summary": "One more attempt for a FAILED message (never for opted-out recipients; invalid numbers need force)",
+        "tags": [
+          "messages"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "note"
+                ],
+                "properties": {
+                  "note": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 300
+                  },
+                  "force": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/messages/{id}/reconcile": {
+      "post": {
+        "summary": "Resolve an UNKNOWN message before any resend",
+        "tags": [
+          "messages"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "decision",
+                  "note"
+                ],
+                "properties": {
+                  "decision": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "CONFIRMED_SENT"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "CONFIRMED_NOT_SENT"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "RESEND"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "ABANDON"
+                        ]
+                      }
+                    ]
+                  },
+                  "note": {
+                    "type": "string",
+                    "minLength": 5,
+                    "maxLength": 500,
+                    "description": "How you established this, e.g. \"Checked Sent folder on the phone\""
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/contacts/import/template.csv": {
+      "get": {
+        "summary": "Sample CSV import template",
+        "tags": [
+          "contacts"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/contacts/import": {
+      "post": {
+        "summary": "Step 1: upload a CSV or XLSX (multipart field \"file\", optional field \"country\"). Rows are validated and staged; nothing is saved to contacts yet.",
+        "tags": [
+          "contacts"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/contacts/imports/{id}": {
+      "get": {
+        "tags": [
+          "contacts"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            },
+            "in": "query",
+            "name": "offset",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/contacts/imports/{id}/problems.csv": {
+      "get": {
+        "tags": [
+          "contacts"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/contacts/imports/{id}/commit": {
+      "post": {
+        "summary": "Step 2: create contacts from the staged rows",
+        "tags": [
+          "contacts"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "on_existing"
+                ],
+                "properties": {
+                  "on_existing": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "skip"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "update"
+                        ]
+                      }
+                    ],
+                    "default": "skip"
+                  },
+                  "group_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "maxItems": 20,
+                    "uniqueItems": true
+                  },
+                  "add_tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z0-9_\\- ]{1,40}$"
+                    },
+                    "maxItems": 10
+                  },
+                  "store_invalid": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "default_consent": {
+                    "type": "object",
+                    "required": [
+                      "source"
+                    ],
+                    "properties": {
+                      "source": {
+                        "type": "string",
+                        "minLength": 2,
+                        "maxLength": 200
+                      },
+                      "evidence": {
+                        "type": "string",
+                        "maxLength": 500
+                      },
+                      "effective_at": {
+                        "type": "string",
+                        "format": "date-time"
+                      }
+                    },
+                    "nullable": true
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/contacts/imports/{id}/discard": {
+      "post": {
+        "tags": [
+          "contacts"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/contacts/export.csv": {
+      "get": {
+        "summary": "Export contacts (streamed). Full numbers need contacts.read_full; every export is audited.",
+        "tags": [
+          "contacts"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "query",
+            "name": "group_id",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "boolean",
+              "default": true
+            },
+            "in": "query",
+            "name": "include_invalid",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/contacts/{id}/erase": {
+      "post": {
+        "summary": "Erase a person’s data (data-protection request). Removes name, email, reference and number from the contact and its messages. Any opt-out for the number is kept so they are never messaged again.",
+        "tags": [
+          "contacts"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "note"
+                ],
+                "properties": {
+                  "note": {
+                    "type": "string",
+                    "minLength": 5,
+                    "maxLength": 300
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/dashboard/summary": {
+      "get": {
+        "summary": "Overview numbers for the dashboard home page",
+        "tags": [
+          "dashboard"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/alerts": {
+      "get": {
+        "tags": [
+          "dashboard"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "boolean",
+              "default": true
+            },
+            "in": "query",
+            "name": "open",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/alerts/{id}/ack": {
+      "post": {
+        "tags": [
+          "dashboard"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/maintenance/retention": {
+      "post": {
+        "summary": "Run the retention purge now (dry_run shows what would be deleted)",
+        "tags": [
+          "settings"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "dry_run"
+                ],
+                "properties": {
+                  "dry_run": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/contacts/{id}/messages": {
+      "get": {
+        "summary": "Per-recipient message history",
+        "tags": [
+          "contacts"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
             "description": "Default Response"

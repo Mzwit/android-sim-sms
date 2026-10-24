@@ -28,7 +28,9 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: backend/package-lock.json
+          cache-dependency-path: |
+            backend/package-lock.json
+            dashboard/package-lock.json
       - name: Install PostgreSQL 16 client (for the backup/restore test)
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client-16 || sudo apt-get install -y -qq postgresql-client
