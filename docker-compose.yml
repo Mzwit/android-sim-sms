@@ -1,0 +1,49 @@
+# Android SIM SMS Gateway — PC services
+#   docker compose up -d --build
+# Dashboard/API: http://localhost:8443   (https once TLS is configured, Phase 3)
+name: smsgw
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: smsgw
+      POSTGRES_USER: smsgw
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      TZ: Africa/Mbabane
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/initdb:/docker-entrypoint-initdb.d:ro
+      - ./backups:/backups
+    # Only reachable from this PC (for backups and tests), never from the LAN.
+    ports:
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smsgw -d smsgw"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 8443
+      DATABASE_URL: postgres://smsgw:${POSTGRES_PASSWORD}@db:5432/smsgw
+      TZ: Africa/Mbabane
+    volumes:
+      - ./certs:/app/certs:ro
+    # BIND_ADDRESS=127.0.0.1 keeps the API on this PC only. Phase 3 (phone pairing)
+    # sets it to the PC's LAN address; it must never be port-forwarded to the internet.
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:8443:8443"
+
+volumes:
+  pgdata:
