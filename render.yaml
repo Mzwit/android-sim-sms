@@ -9,7 +9,7 @@ services:
     region: frankfurt
     branch: main
     buildCommand: >-
-      cd dashboard && npm ci && npm run build &&
+      cd dashboard && npm ci --include=dev && npm run build &&
       cd ../backend && npm ci --include=dev && npm run build && npm prune --omit=dev
     startCommand: cd backend && node dist/src/server.js
     healthCheckPath: /healthz
